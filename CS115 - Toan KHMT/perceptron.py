@@ -3,7 +3,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
-np.random.seed(2)
+np.random.seed(0)
 
 means = [[2, 2], [4, 2]]
 cov = [[.3, .2], [.2, .3]]
