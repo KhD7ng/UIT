@@ -1,6 +1,6 @@
-create database QLCB
+﻿create database QLCB
 use QLCB
-
+DROP TABLE DATCHO
 
 --Tao bang
 create table KHACHHANG
@@ -10,6 +10,7 @@ create table KHACHHANG
 	DCHI	nvarchar(50),
 	DTHOAI	nvarchar(12)
 )
+DROP TABLE NHANVIEN
 create table NHANVIEN
 (
 	MANV	nvarchar(15) not null,
@@ -365,4 +366,126 @@ insert into PHANCONG
 values ('1007','10/31/2000','206')
 go
 
+--18. Cho biết hãng sản xuất, mã loại và số hiệu của máy bay đã được sử dụng nhiều nhất.
+SELECT DISTINCT HANGSX, LMB.MALOAI, SOHIEU FROM LICHBAY LB, LOAIMB LMB
+WHERE LMB.MALOAI = LB.MALOAI AND LB.MALOAI = (
+	SELECT TOP 1 MALOAI FROM LICHBAY 
+	GROUP BY MALOAI
+	ORDER BY COUNT(MALOAI) DESC
+)
 
+--19. Cho biết tên nhân viên được phân công đi nhiều chuyến bay nhất.
+SELECT TEN FROM NHANVIEN NV 
+WHERE MANV = (
+	SELECT TOP 1 MANV FROM PHANCONG
+	GROUP BY MANV
+	ORDER BY COUNT(MANV) DESC
+)
+
+--20. Cho biết thông tin của phi công (tên, địa chỉ, điện thoại) lái nhiều chuyến bay nhất.
+SELECT TEN, DCHI, DTHOAI FROM NHANVIEN NV 
+WHERE LOAINV = 1 AND MANV = (
+	SELECT TOP 1 MANV FROM PHANCONG
+	GROUP BY MANV
+	ORDER BY COUNT(MANV) DESC
+)
+
+--21. Cho biết sân bay (SBDEN) và số lượng chuyến bay của sân bay có ít chuyến bay đáp xuống nhất.
+SELECT TOP 1 WITH TIES SBDEN, COUNT(SBDEN) SLCB FROM CHUYENBAY
+GROUP BY SBDEN
+ORDER BY COUNT(SBDEN) ASC
+
+--22. Cho biết sân bay (SBDI) và số lượng chuyến bay của sân bay có nhiều chuyến bay xuất phát nhất.
+SELECT TOP 1 WITH TIES SBDI, COUNT(SBDI) SLCB FROM CHUYENBAY
+GROUP BY SBDI
+ORDER BY COUNT(SBDI) DESC
+
+--23. Cho biết tên, địa chỉ, và điện thoại của khách hàng đã đi trên nhiều chuyến bay nhất.
+SELECT TOP 1 WITH TIES TEN, DCHI, DTHOAI FROM KHACHHANG KH, DATCHO DC
+WHERE KH.MAKH = DC.MAKH
+GROUP BY TEN, DCHI, DTHOAI
+ORDER BY COUNT(KH.MAKH) DESC
+
+--24. Cho biết mã số, tên và lương của các phi công có khả năng lái nhiều loại máy bay nhất.
+SELECT TOP 1 WITH TIES NV.MANV, TEN, LUONG FROM NHANVIEN NV, KHANANG KN
+WHERE KN.MANV = NV.MANV
+GROUP BY NV.MANV, TEN, LUONG
+ORDER BY COUNT(KN.MANV) DESC
+
+--25. Cho biết thông tin (mã nhân viên, tên, lương) của nhân viên có mức lương cao nhất.
+SELECT MANV, TEN, LUONG FROM NHANVIEN 
+WHERE LUONG = (
+	SELECT TOP 1 LUONG FROM NHANVIEN
+	GROUP BY LUONG
+	ORDER BY LUONG DESC
+)
+
+--26. Cho biết tên, địa chỉ của các nhân viên có lương cao nhất trong phi hành đoàn 
+--(các nhân viên được phân công trong một chuyến bay) mà người đó tham gia.
+SELECT TEN, DCHI FROM NHANVIEN 
+WHERE LUONG = (
+	SELECT TOP 1 WITH TIES LUONG FROM NHANVIEN NV, PHANCONG PC
+	WHERE NV.MANV = PC.MANV
+	GROUP BY LUONG
+	ORDER BY LUONG DESC
+)
+
+--27. Cho biết mã chuyến bay, giờ đi và giờ đến của chuyến bay bay sớm nhất trong ngày.
+SELECT MACB, GIODI, GIODEN FROM CHUYENBAY
+WHERE GIODI = (
+	SELECT MIN(GIODI) FROM CHUYENBAY
+)
+
+--28. Cho biết mã chuyến bay có thời gian bay dài nhất. Xuất ra mã chuyến bay và thời gian bay (tính bằng phút).
+SELECT MACB, DATEDIFF(MI, GIODI, GIODEN) FROM CHUYENBAY
+WHERE DATEDIFF(MI, GIODI, GIODEN) = (
+	SELECT TOP 1 DATEDIFF(MI, GIODI, GIODEN) FROM CHUYENBAY
+	GROUP BY DATEDIFF(MI, GIODI, GIODEN)
+	ORDER BY DATEDIFF(MI, GIODI, GIODEN) DESC
+)
+
+--29. Cho biết mã chuyến bay có thời gian bay ít nhất. Xuất ra mã chuyến bay và thời gian bay.
+SELECT MACB, DATEDIFF(MI, GIODI, GIODEN) FROM CHUYENBAY
+WHERE DATEDIFF(MI, GIODI, GIODEN) = (
+	SELECT TOP 1 DATEDIFF(MI, GIODI, GIODEN) FROM CHUYENBAY
+	GROUP BY DATEDIFF(MI, GIODI, GIODEN)
+	ORDER BY DATEDIFF(MI, GIODI, GIODEN) ASC
+)
+
+--30. Cho biết mã chuyến bay và ngày đi của những chuyến bay bay trên loại máy bay B747 nhiều nhất.
+SELECT MACB, NGAYDI FROM LICHBAY 
+WHERE MALOAI = 'B747' AND MACB = (
+	SELECT TOP 1 MACB FROM LICHBAY
+	WHERE MALOAI = 'B747'
+	GROUP BY MACB
+	ORDER BY COUNT(MACB) DESC
+)
+
+--31. Với mỗi chuyến bay có trên 3 hành khách, cho biết mã chuyến bay và số lượng nhân viên trên chuyến bay đó.
+--Xuất ra mã chuyến bay và số lượng nhân viên.
+SELECT DC.MACB, COUNT(DISTINCT MANV) SLNV FROM PHANCONG PC, DATCHO DC 
+WHERE PC.MACB = DC.MACB
+GROUP BY DC.MACB
+HAVING COUNT(DISTINCT MAKH) > 3
+
+--32. Với mỗi loại nhân viên có tổng lương trên 600000, cho biết số lượng nhân viên trong từng loại nhân viên đó. 
+--Xuất ra loại nhân viên, và số lượng nhân viên tương ứng.
+SELECT LOAINV, COUNT(LOAINV) SLNV FROM NHANVIEN
+GROUP BY LOAINV
+HAVING SUM(LUONG) > 600000
+
+--33. Với mỗi chuyến bay có trên 3 nhân viên, cho biết mã chuyến bay và số lượng khách hàng đã đặt chỗ trên chuyến bay đó.
+SELECT PC.MACB, COUNT(DISTINCT MAKH) SLKH FROM DATCHO DC, PHANCONG PC
+WHERE PC.MACB = DC.MACB
+GROUP BY PC.MACB
+HAVING COUNT(DISTINCT MANV) > 3
+
+--34. Với mỗi loại máy bay có nhiều hơn một chiếc, cho biết số lượng chuyến bay đã được bố trí bay bằng loại máy bay đó. 
+--Xuất ra mã loại và số lượng.
+SELECT MALOAI, COUNT(MALOAI) SLCB FROM LICHBAY
+WHERE MALOAI IN (
+	SELECT MALOAI FROM MAYBAY
+	GROUP BY MALOAI
+	HAVING COUNT(MALOAI) > 1
+)
+GROUP BY MALOAI
