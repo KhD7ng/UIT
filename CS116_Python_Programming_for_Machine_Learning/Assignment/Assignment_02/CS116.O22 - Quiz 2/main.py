@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from joblib import dump, load
 
 
@@ -18,6 +19,9 @@ def run_train(public_dir, model_dir):
     # Loads the training data from the .npz file.
     train_data = np.load(train_file)
 
+    # df = pd.DataFrame(train_data)
+    # df.head(10)
+
     # Extracts the features from the training data.
     X_train = train_data['X_train'][:-250]
 
@@ -25,7 +29,7 @@ def run_train(public_dir, model_dir):
     y_train = train_data['y_train'][:-250]
 
     # Instantiates the logistic regression model.
-    model = LogisticRegression()
+    model = KNeighborsClassifier(weights='distance', n_neighbors=18, leaf_size=35)
 
     # Fits the model to the training data.
     model.fit(X_train, y_train)
