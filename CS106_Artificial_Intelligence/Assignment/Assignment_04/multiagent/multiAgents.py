@@ -410,7 +410,7 @@ def betterEvaluationFunction(currentGameState):
 
     closestGhost = min([manhattanDistance(newPos, ghost.getPosition()) for ghost in newGhostStates])
     
-    closestCapsule = min([manhattanDistance(newPos, caps) for caps in newCapsules]) if newCapsules else 0
+    closestCapsule = min([manhattanDistance(newPos, caps) for caps in newCapsules]) if newCapsules else 0 # if there's no capsule on the map, return 0
     
     if closestCapsule:
         closest_capsule = -3 / closestCapsule 
@@ -418,21 +418,23 @@ def betterEvaluationFunction(currentGameState):
         closest_capsule = 100
 
     if closestGhost:
-        ghost_distance = -2 / closestGhost
-    else:
-        ghost_distance = -9999 # If the ghosts are too close, prioritize to avoid them 
+        ghost_distance = -2 / closestGhost # 
+    elif closestGhost < 2:
+        ghost_distance = -9999 # If the ghosts are too close, prioritize avoiding them
+
+    foodList = newFood.asList()
+    closestFood = min([euclideanDistance(newPos, food) for food in foodList]) if foodList else 0
 
     # Calculate distance to the nearest non-scared ghost
     min_ghost_distance = min([manhattanDistance(newPos, ghost.getPosition()) for ghost, scaredTime in zip(newGhostStates, newScaredTimes) if scaredTime == 0], default=float('inf'))
 
-    # Decide whether to run towards ghosts or not based on their distance
-    if min_ghost_distance > 3:  # If the nearest non-scared ghost is far enough, prioritize hunting them
-        ghost_decision = 20
-    else:
-        ghost_decision = -20
+    foodNearby = any(manhattanDistance(newPos, food) <= 100 for food in newFood.asList())
 
-    foodList = newFood.asList()
-    closestFood = min([euclideanDistance(newPos, food) for food in foodList]) if foodList else 0
+    # Decide whether to run towards ghosts or not based on their distance
+    if min_ghost_distance >= 3 and foodNearby:  # If the nearest non-scared ghost is far enough, prioritize eating food
+        alphaFactor = 3
+    else:
+        alphaFactor = -1
         
     feature = [
         closestFood, 
@@ -441,7 +443,7 @@ def betterEvaluationFunction(currentGameState):
         closest_capsule,
         currentGameState.getScore(),
         maxScaredTimes,
-        ghost_decision 
+        alphaFactor
     ]
 
     weight = [
@@ -451,7 +453,7 @@ def betterEvaluationFunction(currentGameState):
         1,      # closest_capsule
         2,      # currentGameState.getScore()
         10,     # maxScaredTimes
-        5       # ghost_decision
+        100     # alphaFactor which corresponds whether PacMan should prioritize eating food or avoiding ghosts
     ]
 
     return sum([f * w for f, w in zip(feature, weight)])
