@@ -3,36 +3,61 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-bool cmp(const pair<int, int>& a, const pair<int, int>& b) {
-    return a.first > b.first;
+vector<int> job;
+ll timeMIN = LONG_LONG_MAX;
+vector<int> ans;
+
+
+ll findMaxTime(const vector<ll>& totalTime) {
+    return *max_element(totalTime.begin(), totalTime.end());
+}
+vector<ll> totalTime;
+void jobSchedulingGenerating(int curJob, int numJob, int numMachine, vector<int> index) {
+    for (int machine = 0; machine < numMachine; machine++) {
+        if (curJob == numJob) {
+            for (int jobs = 0; jobs < numJob; jobs++)
+                totalTime[index[jobs]] += job[jobs];
+
+            ll maxTime = findMaxTime(totalTime);
+
+            if (maxTime < timeMIN) {
+                timeMIN = maxTime;
+                // cout << timeMIN << '\n';
+                ans.clear();
+                for (auto i : index)
+                    ans.push_back(i);
+            }
+            fill(totalTime.begin(), totalTime.end(), 0);
+            return;
+        } else {
+            index[curJob] = machine;
+            jobSchedulingGenerating(curJob + 1, numJob, numMachine, index);
+        }
+    }
 }
 
 void solve() {
     int numJob, numMachine;
-    vector<pair<int, int>> job;
     cin >> numJob >> numMachine;
     job.resize(numJob);
-    for(int i = 0; i < numJob; i++) {
-        cin >> job[i].first;
-        job[i].second = i;
+    for (int i = 0; i < numJob; i++) {
+        cin >> job[i];
     }
 
-    // Bài toán cần sort, sau đó tìm cách chọn tối ưu
-    sort(job.begin(), job.end(), cmp);
-
-    // Test
-    for(auto i : job)
-        cout << i.first << ' ';
-
-    // Process
-    vector<vector<ll>> totalTime;
-    vector<vector<vector<ll>>> dp;
+    // Khong can sort, vi sort cung cha giup ich duoc gi
     
+    vector<int> index;
+    totalTime.resize(numMachine, 0);
+    index.resize(numJob, 0);
+    
+    jobSchedulingGenerating(1, numJob, numMachine, index);
+
+    for (auto i : ans)
+        cout << i << ' ';
 }
 
-int main()
-{
+int main() {
     faster;
-	solve();
-	return 0;
+    solve();
+    return 0;
 }
