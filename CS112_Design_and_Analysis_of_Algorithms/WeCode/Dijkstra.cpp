@@ -5,17 +5,26 @@ using namespace std;
 #define pb push_back
 #define spacing cout << '\n' << '\n' << '\n';
 
+struct Compare {
+    bool operator()(const pair<int, int> &a, const pair<int, int> &b) {
+        if (a.first == b.first) {
+            return a.second < b.second; // distance bằng nhau, ưu tiên số thứ tự lớn hơn
+        }
+        return a.first > b.first; // distance nhỏ hơn
+    }
+};
+
 void solve() {
     int v, n;
     cin >> v >> n;
 
-    spacing;    
+    // spacing;
     vector<string> vertices(v);
-    map<string, int> mappingIndex;
+    map<string, int> mp;
 
     for (int i = 0; i < v; i++) {
         cin >> vertices[i];
-        mappingIndex[vertices[i]] = i;
+        mp[vertices[i]] = i;
     }
 
     vector<vector<int>> adj(v, vector<int>(v));
@@ -30,51 +39,55 @@ void solve() {
         cin >> s >> e;
         
         vector<int> dis(v, INT_MAX); // Lưu khoảng cách từ start -> curNode
-        dis[mappingIndex[s]] = 0;
+        dis[mp[s]] = 0; // dis(s, s) = 0
 
-        // <distance, nodeIndex>
-        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> q;
+        
         vector<bool> visited(v, 0);
         vector<int> parent(v, -1);
-
-        q.push({0, mappingIndex[s]});
-        int maxQueueSize = 1;
+        using T = pair<int,int>;
+        priority_queue<T, vector<T>, Compare> pq;
+        int time = 0;
         
-        while (q.size()) {
-            int curNode = q.top().second;
-            q.pop();
+        pq.push({dis[mp[s]], mp[s]});
 
+        int nodeExpanded = 0;
+        
+        while (!pq.empty()) {
+            int curNode = pq.top().second;
+            pq.pop();
             if (visited[curNode]) continue;
             visited[curNode] = 1;
-            maxQueueSize++;
-            
+            nodeExpanded++;
+            if(vertices[curNode] == e) break;
+
             for (int j = 0; j < v; j++) {
                 if (adj[curNode][j] && !visited[j]) {
+                    // cout << vertices[j] << ' ';
                     int weight = adj[curNode][j];
                     if (dis[curNode] + weight < dis[j]) {
                         dis[j] = dis[curNode] + weight;
                         parent[j] = curNode;
-                        q.push({dis[j], j});
+                        pq.push({dis[j], j});
                     }
                 }
             }
         }
 
         vector<string> path;
-        for (int at = mappingIndex[e]; at != -1; at = parent[at]) {
+        for (int at = mp[e]; at != -1; at = parent[at]) {
             path.pb(vertices[at]);
         }
         reverse(path.begin(), path.end());
 
-        if(dis[mappingIndex[e]] == INT_MAX) {
+        if(dis[mp[e]] == INT_MAX) {
             cout << "-unreachable-" << '\n';
-            cout << maxQueueSize << ' ' << 0 << '\n';
+            cout << nodeExpanded << ' ' << 0 << '\n';
         } else {
             for (const string &node : path) {
                 cout << node << ' ';
             }
             cout << '\n';
-            cout << maxQueueSize << ' ' << dis[mappingIndex[e]] << '\n';
+            cout << nodeExpanded << ' ' << dis[mp[e]] << '\n';
         }
     }
 }

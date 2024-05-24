@@ -28,7 +28,7 @@ void solve() {
 
 int main()
 {
-    faster;
+    // faster;
 	solve();
 	return 0;
 }
